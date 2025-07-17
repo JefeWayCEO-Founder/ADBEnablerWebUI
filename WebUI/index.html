@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrokeScreen ADB Authorize Web UI</title>
+    <link rel="stylesheet" href="Styling/main.css">
+    <link rel="stylesheet" href="Styling/forms.css">
+    <link rel="stylesheet" href="Styling/messages.css">
+    </head>
+<body>
+    <div class="container">
+        <h1>BrokeScreen ADB Authorize</h1>
+        <p>Control your Android device with a broken screen remotely.</p>
+
+        <div class="section">
+            <h2>Device Configuration</h2>
+            <div id="messages"></div>
+            <form id="configForm">
+                <label for="deviceIp">Device IP (e.g., 192.168.1.100:8080):</label>
+                <input type="text" id="deviceIp" placeholder="Enter Device IP and Port" required>
+
+                <label for="secretKey">Secret Key (Password):</label>
+                <input type="password" id="secretKey" placeholder="Enter Secret Key" required>
+
+                <button type="submit">Set Device Config</button>
+            </form>
+        </div>
+
+        <div class="section">
+            <h2>Commands</h2>
+            <form id="commandForm">
+                <label for="commandType">Select Command:</label>
+                <select id="commandType">
+                    <option value="adb_auth_dialog">Click ADB Auth Dialog</option>
+                    <option value="unlock_device">Unlock Device (Enter Password/PIN)</option>
+                    </select>
+
+                <div id="unlockPasswordDiv" style="display:none;">
+                    <label for="unlockPassword">Unlock Password/PIN:</label>
+                    <input type="password" id="unlockPassword" placeholder="Enter Device Unlock Password/PIN">
+                </div>
+
+                <button type="submit">Send Command</button>
+            </form>
+        </div>
+
+        <div class="section">
+            <h2>Log</h2>
+            <div id="logOutput" class="log-output">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        // Basic JavaScript for demonstration and structure
+        const configForm = document.getElementById('configForm');
+        const commandForm = document.getElementById('commandForm');
+        const unlockPasswordDiv = document.getElementById('unlockPasswordDiv');
+        const commandTypeSelect = document.getElementById('commandType');
+        const messagesDiv = document.getElementById('messages');
+        const logOutput = document.getElementById('logOutput');
+
+        let currentDeviceIp = localStorage.getItem('deviceIp') || '';
+        let currentSecretKey = localStorage.getItem('secretKey') || ''; // Stored locally for convenience
+
+        document.getElementById('deviceIp').value = currentDeviceIp;
+        document.getElementById('secretKey').value = currentSecretKey;
+
+        function showMessage(msg, type = 'info') {
+            messagesDiv.innerHTML = `<div class="${type}">${msg}</div>`;
+            setTimeout(() => messagesDiv.innerHTML = '', 5000); // Clear after 5 seconds
+        }
+
+        function appendToLog(msg, type = 'info') {
+            const p = document.createElement('p');
+            p.className = `log-${type}`;
+            p.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            logOutput.prepend(p); // Add to top
+        }
+
+        commandTypeSelect.addEventListener('change', function() {
+            if (this.value === 'unlock_device') {
+                unlockPasswordDiv.style.display = 'block';
+            } else {
+                unlockPasswordDiv.style.display = 'none';
+            }
+        });
+
+        configForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            currentDeviceIp = document.getElementById('deviceIp').value;
+            currentSecretKey = document.getElementById('secretKey').value;
+            localStorage.setItem('deviceIp', currentDeviceIp);
+            localStorage.setItem('secretKey', currentSecretKey);
+            showMessage('Device configuration saved locally.', 'success');
+            appendToLog('Device IP and Secret Key updated locally.');
+        });
+
+        commandForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            if (!currentDeviceIp || !currentSecretKey) {
+                showMessage('Please set Device IP and Secret Key first!', 'error');
+                return;
+            }
+
+            const command = commandTypeSelect.value;
+            let payload = {
+                command: command,
+                secretKey: currentSecretKey
+            };
+
+            if (command === 'unlock_device') {
+                const unlockPassword = document.getElementById('unlockPassword').value;
+                if (!unlockPassword) {
+                    showMessage('Please enter the device unlock password/PIN.', 'error');
+                    return;
+                }
+                payload.unlockPassword = unlockPassword;
+            }
+
+            appendToLog(`Sending command: ${command} to ${currentDeviceIp}...`);
+
+            try {
+                const response = await fetch(`http://${currentDeviceIp}/command`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    const result = await response.text(); // or .json() if server sends JSON
+                    showMessage(`Command sent successfully! Response: ${result}`, 'success');
+                    appendToLog(`Command ${command} successful. Response: ${result}`, 'success');
+                } else {
+                    const errorText = await response.text();
+                    showMessage(`Failed to send command: ${response.status} ${response.statusText} - ${errorText}`, 'error');
+                    appendToLog(`Command ${command} failed. Status: ${response.status} ${response.statusText}. Error: ${errorText}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`Network error: ${error.message}. Make sure device IP is correct and app is running.`, 'error');
+                appendToLog(`Network error during ${command}: ${error.message}`, 'error');
+            }
+        });
+
+        // Auto-trigger change to show/hide unlock password field if option is pre-selected
+        commandTypeSelect.dispatchEvent(new Event('change'));
+    </script>
+</body>
+</html>
