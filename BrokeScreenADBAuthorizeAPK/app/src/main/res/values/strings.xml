@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Broke Screen ADB Authorize</string> <!-- UPDATED APP NAME -->
+    <string name="hello_greeting">Hello %1$s!</string>
+    <!-- Add this new string for the Accessibility Service description -->
+    <string name="accessibility_service_description">
+        This service helps users with broken screens or grip issues to enable ADB debugging remotely for device recovery.
+        It requires manual activation in Accessibility settings. It does NOT take control of your device.
+    </string>
+</resources>
