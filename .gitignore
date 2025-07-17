@@ -1,1 +1,32 @@
-# Placeholder
+# Android Studio and Gradle ignore files
+.gradle/                        # Gradle's temporary files and caches (the one with the dot)
+!/gradle/wrapper/               # Exception: include the gradle wrapper directory
+!/gradle/wrapper/gradle-wrapper.jar
+!/gradle/wrapper/gradle-wrapper.properties
+!/gradle/wrapper/gradle-wrapper-validation.xml # If present
+
+/local.properties               # Local SDK paths (specific to your machine)
+/.idea/                         # Android Studio's project settings (local workspace)
+/build/                         # Output of the build process (APKs, AABs, compiled classes)
+/BrokeScreenADBAuthorize/app/build/ # Specific for your app module build output
+
+# Native build (if you use NDK)
+.externalNativeBuild/
+.cxx/
+
+# Keystores (NEVER commit these!)
+*.jks
+*.keystore
+debug.keystore
+
+# Other common ignore patterns
+*.iml                           # IntelliJ/Android Studio module files
+captures/                       # Performance profiler captures
+.DS_Store                       # macOS specific (harmless, but no need to commit)
+Thumbs.db                       # Windows specific
+# Logs
+*.log
+
+# WebUI specific (if any build artifacts or node modules are generated in WebUI)
+# /WebUI/node_modules/
+# /WebUI/dist/
